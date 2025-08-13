@@ -31,6 +31,9 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
 
     const jobsCollection = client.db("jobSphere").collection("jobs");
+    const appliedjobsCollection = client
+      .db("jobSphere")
+      .collection("appliedjobs");
 
     // Get all jobs data from db
     app.get("/jobs", async (req, res) => {
@@ -52,6 +55,13 @@ async function run() {
     app.post("/job", async (req, res) => {
       const data = req.body;
       const result = await jobsCollection.insertOne(data);
+      res.send(result);
+    });
+
+    // add an applied job information in the database
+    app.post("/appliedjob", async (req, res) => {
+      const data = req.body;
+      const result = await appliedjobsCollection.insertOne(data);
       res.send(result);
     });
 
