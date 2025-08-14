@@ -61,7 +61,30 @@ async function run() {
     // add an applied job information in the database
     app.post("/appliedjob", async (req, res) => {
       const data = req.body;
+
+      // check where the user applied for this job before
+      const query = {
+        email: data.email,
+        jobId: data.jobId,
+      };
+
+      const alreadyApplied = await appliedjobsCollection.findOne(query);
+      if (alreadyApplied) {
+        return res.status(400).send("You have already applied for this job");
+      }
+
       const result = await appliedjobsCollection.insertOne(data);
+
+      const updateDoc = {
+        $inc: { jobApplicants: 1 },
+      };
+
+      const jobquery = { _id: new ObjectId(data.jobId) };
+      const updateJobApplicant = await jobsCollection.updateOne(
+        jobquery,
+        updateDoc
+      );
+      console.log(updateJobApplicant);
       res.send(result);
     });
 
