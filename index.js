@@ -50,6 +50,14 @@ async function run() {
       res.send(result);
     });
 
+    // getting all posted jobs for a specified user
+    app.get("/jobs/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { "buyer.email": email };
+      const result = await jobsCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // add a single job in the database
 
     app.post("/job", async (req, res) => {
