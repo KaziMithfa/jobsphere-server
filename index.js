@@ -58,6 +58,14 @@ async function run() {
       res.send(result);
     });
 
+    // getting all applied jobs for a specfic user
+    app.get("/appliedJobs/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await appliedjobsCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // add a single job in the database
 
     app.post("/job", async (req, res) => {
