@@ -137,6 +137,37 @@ async function run() {
       res.send(result);
     });
 
+    // getting all jobs for pagination
+
+    app.get("/all-jobs", async (req, res) => {
+      const size = parseInt(req.query.size);
+      const page = parseInt(req.query.page) - 1;
+      const search = req.query.search;
+
+      let query = {
+        jobTitle: { $regex: search, $options: "i" },
+      };
+
+      const result = await jobsCollection
+        .find(query)
+        .skip(page * size)
+        .limit(size)
+        .toArray();
+      res.send(result);
+    });
+
+    // get all jobs data count for db
+
+    app.get("/jobs-count", async (req, res) => {
+      const search = req.query.search;
+
+      let query = {
+        jobTitle: { $regex: search, $options: "i" },
+      };
+      const count = await jobsCollection.countDocuments(query);
+      res.send({ count });
+    });
+
     //await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
