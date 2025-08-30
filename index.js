@@ -17,6 +17,27 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
+
+// verify jwt middleware
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token;
+  console.log(token);
+
+  if (!token) return res.status(401).send({ message: "unauthorized access" });
+
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        console.log(error);
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      console.log(decoded);
+      req.user = decoded;
+      next();
+    });
+  }
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.6salq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -48,8 +69,21 @@ async function run() {
       res
         .cookie("token", token, {
           httpOnly: true,
-          secure: process.env.node_ENV === "production",
-          sameSite: process.env.node_ENV === "production" ? "none" : "strict",
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+
+    // clear token on logout
+
+    app.get("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+          maxAge: 0,
         })
         .send({ success: true });
     });
@@ -70,7 +104,8 @@ async function run() {
     });
 
     // getting all posted jobs for a specified user
-    app.get("/jobs/:email", async (req, res) => {
+    app.get("/jobs/:email", verifyToken, async (req, res) => {
+      const tokenEmail = req.user.email;
       const email = req.params.email;
       const query = { "buyer.email": email };
       const result = await jobsCollection.find(query).toArray();
@@ -81,6 +116,11 @@ async function run() {
     app.get("/appliedJobs/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
+
+      if (tokenEmail !== email) {
+        res.status(403).send({ message: "forbidden access" });
+      }
+
       const filter = req.query.filter;
       if (filter) {
         query.category = filter;
