@@ -29,7 +29,7 @@ const verifyToken = (req, res, next) => {
   if (token) {
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
       if (err) {
-        console.log(error);
+        console.log(err);
         return res.status(401).send({ message: "unauthorized access" });
       }
       console.log(decoded);
@@ -107,18 +107,25 @@ async function run() {
     app.get("/jobs/:email", verifyToken, async (req, res) => {
       const tokenEmail = req.user.email;
       const email = req.params.email;
+
+      if (tokenEmail !== email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
       const query = { "buyer.email": email };
       const result = await jobsCollection.find(query).toArray();
       res.send(result);
     });
 
     // getting all applied jobs for a specfic user
-    app.get("/appliedJobs/:email", async (req, res) => {
+    app.get("/appliedJobs/:email", verifyToken, async (req, res) => {
+      const tokenEmail = req.user.email;
+      console.log(tokenEmail);
       const email = req.params.email;
       const query = { email: email };
 
       if (tokenEmail !== email) {
-        res.status(403).send({ message: "forbidden access" });
+        return res.status(403).send({ message: "forbidden access" });
       }
 
       const filter = req.query.filter;
