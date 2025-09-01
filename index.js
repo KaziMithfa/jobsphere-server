@@ -10,7 +10,11 @@ const port = process.env.PORT || 5000;
 const app = express();
 
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: [
+    "http://localhost:5173",
+    "https://jobsphere-45283.web.app",
+    "https://jobsphere-sigma.vercel.app",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
